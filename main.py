@@ -1,4 +1,5 @@
 from scapy.all import *
+from scapy.layers.inet import IP
 from concurrent.futures import ThreadPoolExecutor  
 import socket
 
@@ -52,7 +53,7 @@ def reverse_dns_lookup():
 
 if __name__ == "__main__":
     interface_correta = find_iface()
-    sniff(iface=interface_correta, prn=processar_pacote, filter="ip",stop_filter = lambda x: count == 5)
+    sniff(iface=interface_correta, prn=processar_pacote, filter="ip",stop_filter = lambda x: count == 10)
     lista_hostnames = reverse_dns_lookup()
     for ip, hostname in lista_hostnames.items():
         print(f"-> IP: {ip} -> Hostname: {hostname}")
