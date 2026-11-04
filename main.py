@@ -1,4 +1,5 @@
 from scapy.all import *
+from concurrent.futures import ThreadPoolExecutor  
 import socket
 
 conf.use_pcap = True
@@ -33,21 +34,25 @@ def processar_pacote(pacote):
 def reverse_dns_lookup():
     global lista_catalogados
     lista_hostnames = {}
-    try:
-        for i in lista_catalogados:
-            try:
-                hostname = socket.gethostbyaddr(i)[0]
-                lista_hostnames[i] = hostname
-            except socket.herror:
-                continue
-    except Exception as e:
-        print(f"[-] Erro ao realizar reverse DNS lookup para {i}: {e}")
-    
+
+    def resolver(ip):
+        try:
+            return ip, socket.gethostbyaddr(ip)[0]
+        except socket.herror:
+            return ip, "Desconhecido"
+        except Exception:
+            return ip, "Erro"
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        resultados = executor.map(resolver, lista_catalogados)
+        for ip, hostname in resultados:
+            lista_hostnames[ip] = hostname
+            
     return lista_hostnames
 
 if __name__ == "__main__":
     interface_correta = find_iface()
-    sniff(iface=interface_correta, prn=processar_pacote, filter="ip",stop_filter = lambda x: count == 10)
+    sniff(iface=interface_correta, prn=processar_pacote, filter="ip",stop_filter = lambda x: count == 5)
     lista_hostnames = reverse_dns_lookup()
     for ip, hostname in lista_hostnames.items():
         print(f"-> IP: {ip} -> Hostname: {hostname}")
