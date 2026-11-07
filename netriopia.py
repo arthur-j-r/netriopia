@@ -4,16 +4,13 @@ from concurrent.futures import ThreadPoolExecutor
 import socket
 import threading
 conf.use_pcap = True
-
-
 count = 0
 lista_catalogados = []
 def find_iface():
     try:
         with open("iface.txt", "r") as f:
             iface = f.read().strip()
-            if iface in interfaces:
-                return iface
+            return iface
     except FileNotFoundError:
         interfaces = get_if_list()     
         for iface in interfaces:
