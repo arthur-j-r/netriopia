@@ -2,27 +2,35 @@ from scapy.all import *
 from scapy.layers.inet import IP
 from concurrent.futures import ThreadPoolExecutor  
 import socket
-
+import threading
 conf.use_pcap = True
 
 
 count = 0
 lista_catalogados = []
 def find_iface():
-    interfaces = get_if_list()
-    for iface in interfaces:
-        if "Loopback" in iface:
-            continue  
-        try:
-            pacotes = sniff(iface=iface, filter="ip", timeout=3, count=3)
-            if len(pacotes) > 0:
+    try:
+        with open("iface.txt", "r") as f:
+            iface = f.read().strip()
+            if iface in interfaces:
                 return iface
-            else:
-                print(f"[-] Nenhum tráfego detectado nesta interface neste intervalo.")
-        except Exception as e:
-            print(f"[-] Erro ao testar esta interface: {e}")
+    except FileNotFoundError:
+        interfaces = get_if_list()     
+        for iface in interfaces:
+            if "Loopback" in iface:
+                continue  
+            try:
+                pacotes = sniff(iface=iface, filter="ip", timeout=3, count=3)
+                if len(pacotes) > 0:
+                    with open("iface.txt", "w") as f:
+                        f.write(iface)
+                    return iface
+                else:
+                    print(f"[-] Nenhum tráfego detectado nesta interface neste intervalo.")
+            except Exception as e:
+                print(f"[-] Erro ao testar esta interface: {e}")
 
-    print("[+] Varredura concluída.")
+        print("[+] Varredura concluída.")
 def processar_pacote(pacote):
     global count
     global lista_catalogados
